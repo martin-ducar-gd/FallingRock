@@ -14,7 +14,12 @@
     "okta"
   ],
   "author": "Nadav Samet <nadavsr@trueaccord.com>",
-  "contributors": [{"name":"Jon Davis","email":"jdavis@trueaccord.com"}],
+  "contributors": [
+    {
+      "name": "Jon Davis",
+      "email": "jdavis@trueaccord.com"
+    }
+  ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

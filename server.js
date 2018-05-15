@@ -57,10 +57,14 @@ function buildDatabase() {
         });
 
         oktaDirectory.users.forEach(function(user) {
-            user.shortName = user.profile.email.split('@')[0];
-            var dn = interpolateObject(config.okta.userDN, user);
-            user.dn = ldap.parseDN(dn).toString();
-        });
+	    if(!user || user.profile.email.indexOf('+') > -1 ) {
+                winston.info(`skipping user with mail '${user.profile.email}' - unsuported mail format`)
+	    } else {
+                user.shortName = user.profile.email.split('@')[0];
+                var dn = interpolateObject(config.okta.userDN, user);
+                user.dn = ldap.parseDN(dn).toString();
+            }
+	});
 
         var db = {};
         addParents(db, config.okta.userDN);
@@ -121,7 +125,7 @@ buildDatabase().then(function(someDatabase) {
         return next();
     });
 
-    server.search('', authorize, function(req, res, next) {
+    server.search('', function(req, res, next) {
         var out = {
           ip: req.connection.ldap.id,
           time: req.startTime,
@@ -154,6 +158,7 @@ buildDatabase().then(function(someDatabase) {
 
             case 'one':
                 scopeCheck = function(k) {
+		    if(k === 'undefined') { return false }
                     if (req.dn.equals(k)) {
                         return true;
                     }
@@ -165,6 +170,7 @@ buildDatabase().then(function(someDatabase) {
 
             case 'sub':
                 scopeCheck = function(k) {
+		    if(k === 'undefined') { return false }
                     return (req.dn.equals(k) || req.dn.parentOf(k));
                 };
 
@@ -193,7 +199,7 @@ buildDatabase().then(function(someDatabase) {
         return next();
     });
 
-    server.bind('', authorize, function(req, res, next) {
+    server.bind('', function(req, res, next) {
         var db = getCurrentDB();
         var dn = req.dn.toString();
         if (!db[dn] || db[dn].type !== 'user') {
